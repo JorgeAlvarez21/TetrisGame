@@ -1,1 +1,1 @@
-classic Tetris game built using the Pygame Library and other resources
+Classic Tetris game built using the Pygame Library and other resources
