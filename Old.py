@@ -126,44 +126,9 @@
 #         elif event.type == pygame.KEYDOWN:
 #             if event.key == pygame.K_LEFT: # and 135 < sdb
 #                 bdr.pressed_keys["left"] = True
-#                 if x1On == True:
-#                     sdb -=sidemov
-#                     blocks_cords[0][0] -= sidemov
-#                 if x2On == True:
-#                     sdb -= sidemov
-#                     blocks_cords[1][0] -= sidemov
-#                 if x3On == True:
-#                     sdb -= sidemov
-#                     blocks_cords[2][0] -= sidemov
-#                 if y1On == True:
-#                     sdb -= sidemov
-#                     blocks_cords[3][0] -= sidemov
-#                 if y2On == True:
-#                     sdb -= sidemov
-#                     blocks_cords[4][0] -= sidemov
-#                 if y3On == True:
-#                     sdb -= sidemov
-#                     blocks_cords[5][0] -= sidemov
+
 #             if event.key == pygame.K_RIGHT: # and sdb < 400
 #                 bdr.pressed_keys["right"] = True
-#
-#                 if x1On == True:
-#                     blocks_cords[0][0] += sidemov
-#                 if x2On == True:
-#                     sdb += sidemov
-#                     blocks_cords[1][0] += sidemov
-#                 if x3On == True:
-#                     sdb += sidemov
-#                     blocks_cords[2][0] += sidemov
-#                 if y1On == True:
-#                     sdb += sidemov
-#                     blocks_cords[3][0] += sidemov
-#                 if y2On == True:
-#                     sdb += sidemov
-#                     blocks_cords[4][0] += sidemov
-#                 if y3On == True:
-#                     sdb += sidemov
-#                     blocks_cords[5][0] += sidemov
 #
 #         else:
 #             bdr.pressed_keys["left"] = False
@@ -171,37 +136,6 @@
 #     # Holding key
 #     # if bdr.pressed_keys["left"] and tempX >= sidebounds[0]:
 #     #     if x1On == True:
-#     #         blocks_cords[0][0] += sidemov
-#     #     if x2On == True:
-#     #         blocks_cords[1][0] += sidemov
-#     #     if x3On == True:
-#     #         blocks_cords[2][0] += sidemov
-#     #     if y1On == True:
-#     #         blocks_cords[3][0] += sidemov
-#     #     if y2On == True:
-#     #         blocks_cords[4][0] += sidemov
-#     #     if y3On == True:
-#     #         blocks_cords[5][0] += sidemov
-#     # elif bdr.pressed_keys["right"] and tempX <= sidebounds[1] - 25:
-#     #     if x1On == True:
-#     #         blocks_cords[0][0] += bubbleDown
-#     #     if x2On == True:
-#     #         blocks_cords[1][0] += bubbleDown
-#     #     if x3On == True:
-#     #         blocks_cords[2][0] += bubbleDown
-#     #     if y1On == True:
-#     #         blocks_cords[3][0] += bubbleDown
-#     #     if y2On == True:
-#     #         blocks_cords[4][0] += bubbleDown
-#     #     if y3On == True:
-#     #         blocks_cords[5][0] += bubbleDown
-#
-#
-#
-#
-#
-#
-#         # if x >= 500
 #
 #     # display.fill(bdr.main_color)
 #     # tempY += .2

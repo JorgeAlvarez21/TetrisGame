@@ -49,35 +49,35 @@ class make_figure:
                      (1, 0, 0, 0),
                      (1, 0, 0, 0),
                      (0, 0, 0, 0)],
-            'rotA': [(0, 0, 1, 0),
+            'rotA': [(1, 1, 1, 0),
+                     (0, 0, 1, 0),
+                     (0, 0, 0, 0),
+                     (0, 0, 0, 0)],
+            'rotB': [(0, 1, 0, 0),
+                     (0, 1, 0, 0),
+                     (1, 1, 0, 0),
+                     (0, 0, 0, 0)],
+            'rotC': [(1, 0, 0, 0),
                      (1, 1, 1, 0),
                      (0, 0, 0, 0),
-                     (0, 0, 0, 0)],
-            'rotB': [(1, 1, 0, 0),
-                     (0, 1, 0, 0),
-                     (0, 1, 0, 0),
-                     (0, 0, 0, 0)],
-            'rotC': [(1, 1, 1, 0),
-                     (1, 0, 0, 0),
-                     (0, 0, 0, 0),
                      (0, 0, 0, 0)]},
-    'eleInv': {'main': [(0, 1, 0, 0),
+    'eleInv': {'main': [(1, 1, 0, 0),
                         (0, 1, 0, 0),
-                        (1, 1, 0, 0),
+                        (0, 1, 0, 0),
                         (0, 0, 0, 0)],
 
-               'rotA': [(1, 1, 1, 0),
-                        (0, 0, 1, 0),
+               'rotA': [(0, 0, 1, 0),
+                        (1, 1, 1, 0),
                         (0, 0, 0, 0),
                         (0, 0, 0, 0)],
 
-               'rotB': [(1, 1, 0, 0),
+               'rotB': [(1, 0, 0, 0),
                         (1, 0, 0, 0),
-                        (1, 0, 0, 0),
+                        (1, 1, 0, 0),
                         (0, 0, 0, 0)],
 
-               'rotC': [(1, 0, 0, 0),
-                        (1, 1, 1, 0),
+               'rotC': [(1, 1, 1, 0),
+                        (1, 0, 0, 0),
                         (0, 0, 0, 0),
                         (0, 0, 0, 0)]},
 
@@ -165,36 +165,101 @@ class make_figure:
         self.shapeChoice = {'choice' : choice, 'rotation' : rotationChoice}
         return self.shapeChoice, next_rots, self.figures[choice][rotationChoice]
 
-    def find_active_blocks(self, shape, x, **kwargs):
+    def find_active_blocks(self, shape, x, rot_shape, rotation, rotated, **kwargs):
+        startx0 = 3
+        startx1 = 4
+        startx2 = 5
+        startx3 = 6
 
+        starty0 = 0
+        starty1 = 1
+        starty2 = 2
+        starty3 = 3
 
-
-        if len(kwargs) > 0:
+        if rotated:
+            print(rot_shape['choice'], rotation)
             for k, v in kwargs.items():
-                if k == "fix_xpos":
-                    if x >= 7:
-                        x = 7
-                    startx0 = x
-                    startx1 = x + 1
-                    startx2 = x + 2
-                    startx3 = x + 3
+                if rot_shape['choice'] == 'stick':
+                    if rotation == 'rotA' or rotation == 'rotC':
+                        if k == "fix_xpos":
+                            if x >= 7:
+                                x = 6
+                            startx0 = x
+                            startx1 = x + 1
+                            startx2 = x + 2
+                            startx3 = x + 3
+                        if k == "fix_ypos":
+                            starty0 = v
+                            starty1 = v + 1
+                            starty2 = v + 2
+                            starty3 = v + 3
+                    else:
+                        if k == "fix_xpos":
+                                if x >= 7:
+                                    x = 6
+                                startx0 = x
+                                startx1 = x + 1
+                                startx2 = x + 2
+                                startx3 = x + 3
+                        if k == "fix_ypos":
+                            starty0 = v
+                            starty1 = v + 1
+                            starty2 = v + 2
+                            starty3 = v + 3
+                elif rot_shape['choice'] == 'zed' or rot_shape['choice'] == 'zedInv':
+                    if k == "fix_xpos":
+                        if x >= 8:
+                            x = 7
+                        startx0 = x
+                        startx1 = x + 1
+                        startx2 = x + 2
+                        startx3 = x + 3
+                    if k == "fix_ypos":
+                        starty0 = v
+                        starty1 = v + 1
+                        starty2 = v + 2
+                        starty3 = v + 3
+                elif rot_shape['choice'] == 'te':
+                    if rotation == 'rotA' or rotation == 'rotC':
+                        if k == "fix_xpos":
+                                if x >= 7:
+                                    x = 7
+                                startx0 = x
+                                startx1 = x + 1
+                                startx2 = x + 2
+                                startx3 = x + 3
+                        if k == "fix_ypos":
+                            starty0 = v
+                            starty1 = v + 1
+                            starty2 = v + 2
+                            starty3 = v + 3
+                    else:
+                        if k == "fix_xpos":
+                                if x >= 7:
+                                    x = 7
+                                startx0 = x
+                                startx1 = x + 1
+                                startx2 = x + 2
+                                startx3 = x + 3
+                        if k == "fix_ypos":
+                            starty0 = v
+                            starty1 = v + 1
+                            starty2 = v + 2
+                            starty3 = v + 3
 
-                if k == "fix_ypos":
-                    starty0 = v
-                    starty1 = v + 1
-                    starty2 = v + 2
-                    starty3 = v + 3
-
-        else:
-            startx0 = 3
-            startx1 = 4
-            startx2 = 5
-            startx3 = 6
-
-            starty0 = 0
-            starty1 = 1
-            starty2 = 2
-            starty3 = 3
+                else:
+                    if k == "fix_xpos":
+                        if x >= 7:
+                            x = 7
+                        startx0 = x
+                        startx1 = x + 1
+                        startx2 = x + 2
+                        startx3 = x + 3
+                    if k == "fix_ypos":
+                        starty0 = v
+                        starty1 = v + 1
+                        starty2 = v + 2
+                        starty3 = v + 3
 
 
         # x_ls = [startx0, startx1, startx2, startx3]
@@ -259,7 +324,7 @@ class make_figure:
         if shape[3][3] == 1:
             coord = [startx3, starty3]
             active_blocks['d3'] = coord
-        print('KKK', active_blocks)
+
         return active_blocks
 
 

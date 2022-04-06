@@ -11,6 +11,7 @@ class Builder():
         self.blockSize = width, height = (34, 35)
         self.frameSize = width, height = (340, 700)
         self.saved_settled_blocks = {}
+        self.settled_blocks = {}
 
         #Grid
         self.wideGrid = [170, 204, 238, 272, 306, 340, 374, 408, 442, 476, 510]
@@ -35,7 +36,7 @@ class Builder():
         self.main_color = (0,0,20)
         self.white = (255, 255, 255)
         self.blue = (102,102,255)
-        self.gridc = (69,69,75)
+        self.gridc = (45,45,45)
 
         #Font
         # self.smallfont = pygame.font.SysFont('Corbel',35)
