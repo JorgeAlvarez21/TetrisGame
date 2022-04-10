@@ -58,7 +58,7 @@ def rotated(xpos, ypos, choice, rotation_options):
 
 floor = {0:20, 1:20, 2:20, 3:20, 4:20, 5:20, 6:20, 7:20, 8:20, 9:20}
 clock = pygame.time.Clock()
-currenttime = 1
+currenttime = 4
 xaxis = bdr.xaxisB
 display.blit(frameSurf, (170, 100))
 run = True
@@ -66,7 +66,6 @@ time = 0
 rot_y = 0
 block_is_active = False
 on_stash = False
-
 minvals = {}
 while run == True:
     def main_game_logic(active_blocks, xpos, ypos, **kwargs):
@@ -77,26 +76,57 @@ while run == True:
         global minvals
         global on_stash
         global choice, rotation_options, shape
+        left_mov = True
+        right_mov = True
         vel = .3
         move_right = 0
         move_left = 0
         bubble_down = 0
         new_block = True
         while new_block:
+
+            left_pass = []
+            right_pass = []
+
+            for x, y in zip(xpos, ypos):
+                if bdr.grid_blocks[(x - 1, y)] == 1:
+                    left_pass.append(1)
+                else:
+                    left_pass.append(0)
+                if bdr.grid_blocks[(x +1 , y)] == 1:
+                    print('NO right')
+                    right_pass.append(1)
+                else:
+                    right_pass.append(0)
+                    print('Yes right')
+
+            if 1 in left_pass:
+                left_mov = False
+            else:
+                left_mov = True
+            if 1 in right_pass:
+                right_mov = False
+            else:
+                right_mov = True
+
+
+
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     sys.exit()
                     run = False
                 # Single Key
+
                 if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_LEFT and min(xpos) >= 1:
+                    if event.key == pygame.K_LEFT and min(xpos) >= 1 and left_mov is True:
                         bdr.pressed_keys["left"] = True
                         xpos = [x - 1 for x in xpos]
                         middle_x -= 1
-                    elif event.key == pygame.K_RIGHT and max(xpos) <= 8:
-                        bdr.pressed_keys["right"] = True
-                        middle_x +=1
-                        xpos = [x + 1 for x in xpos]
+                    elif event.key == pygame.K_RIGHT and max(xpos) <= 8 and right_mov is True:
+                        if right_mov:
+                            bdr.pressed_keys["right"] = True
+                            middle_x +=1
+                            xpos = [x + 1 for x in xpos]
                     elif event.key == pygame.K_UP:
                         rotated_blocks, xpos, ypos = rotated(xpos, ypos, choice, rotation_options)
                     elif event.key == pygame.K_DOWN:
@@ -107,14 +137,17 @@ while run == True:
                     bdr.pressed_keys["down"] = False
                     bdr.pressed_keys["up"] = False
 
-            if bdr.pressed_keys["right"] and max(xpos) <= 8:
+
+            # right_mov = True
+            # left_mov = True
+
+            if bdr.pressed_keys["right"] and max(xpos) <= 8 and right_mov is True:
                 move_right += vel
                 if move_right >= 4:
                     middle_x += 1
                     xpos = [x + 1 for x in xpos]
                     move_right = 0
-            if bdr.pressed_keys["left"] and min(xpos) >= 1:
-                print('s')
+            if bdr.pressed_keys["left"] and min(xpos) >= 1 and left_mov is True:
                 move_left += vel
                 if move_left >= 4:
                     middle_x -= 1
@@ -157,7 +190,6 @@ while run == True:
                         minvals_y[x] = y
             for x, y in zip(max_x, max_y):
                 if bdr.pressed_keys["down"] and y <= floor[x] - 1:
-                    print('t')
                     bubble_down += vel
                     if bubble_down >= 5:
                         ypos = [y + 1 for y in ypos]
@@ -168,6 +200,7 @@ while run == True:
                     for k, v in minvals_y.items():
                         floor[k] = v
                     bdr.fig_toSave(xpos, ypos)
+                    bdr.blocks_meta(xpos, ypos)
                     active_blocks, xpos, ypos = figBlockPrep()
                     middle_x = 3
                     main_game_logic(active_blocks, xpos, ypos)
@@ -175,9 +208,12 @@ while run == True:
                 else:
                     # Bubble Y Down
                     if currenttime <= time:
-                        currenttime += .5
+                        currenttime += .99
                         ypos = [y + 1 for y in ypos]
                         rot_y = [y + 1 for y in ypos]
+
+
+
 
             # Create Grid
             for i in range(20):

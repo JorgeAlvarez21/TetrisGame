@@ -30,6 +30,12 @@ class Builder():
         self.xaxisB = [x for x in range(11)]
         self.yaxisB = [y for y in range(21)]
 
+        #Grid Blocks
+        self.grid_blocks = {}
+        for y in range(-3, 21):
+            for x in range(-3, 11):
+                self.grid_blocks[x, y] = 0
+
         #Colors
         self.grey = (61,61,66)
         self.light_grey = (20,20,60)
@@ -96,6 +102,15 @@ class Builder():
             figId = f'figure{code}'
             self.saved_settled_blocks[figId] = pygame.Surface(self.blockSize)
             self.settled_blocks[figId] = [x, y]
+
+    def blocks_meta(self, xpos, ypos):
+        for block, value in self.grid_blocks.items():
+            for x, y in zip(xpos, ypos):
+                if block == (x, y):
+                    self.grid_blocks[(x, y)] = 1
+
+
+
 
 
 rc = Builder().grey
