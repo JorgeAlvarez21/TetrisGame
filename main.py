@@ -3,196 +3,233 @@ from pygame.locals import *
 import random
 import figures
 from constructor import Builder
-import time
+import time as timer
 
 pygame.init()
 bdr = Builder()
 display = bdr.Display()
 frameSurf = pygame.Surface(bdr.frameSize)
-figure = figures.make_figure()
-middle_x = 3
-#Function to reset vars for each new fig
-def figBlockPrep():
-    global middle_x
-    global choice, rotation_options, shape
-    global rot_y
-    #Generate new random fig and rotation
-    rot_y = 0
-    choice, rotation_options, shape = figure.gen_shape()
-    find_blocks = figure.find_active_blocks(shape, 6, choice, rotation_options, False) # will return a dict -> {blockId : coords, ...}
-    active_blocks = []
+running = True
+
+
+eleInv = {
+'eleInvRot0' : [ [bdr.xgridB[5], bdr.ygridB[0]], [bdr.xgridB[5], bdr.ygridB[1]], [bdr.xgridB[5], bdr.ygridB[2]], [bdr.xgridB[4], bdr.ygridB[2]] ],
+'eleInvRot1'  : [ [bdr.xgridB[4], bdr.ygridB[0]], [bdr.xgridB[4], bdr.ygridB[1]], [bdr.xgridB[5], bdr.ygridB[1]], [bdr.xgridB[6], bdr.ygridB[1]] ],
+'eleInvRot2' : [ [bdr.xgridB[4], bdr.ygridB[0]], [bdr.xgridB[5], bdr.ygridB[0]], [bdr.xgridB[4], bdr.ygridB[1]], [bdr.xgridB[4], bdr.ygridB[2]] ],
+'eleInvRot3' : [ [bdr.xgridB[4], bdr.ygridB[0]], [bdr.xgridB[5], bdr.ygridB[0]], [bdr.xgridB[6], bdr.ygridB[0]], [bdr.xgridB[6], bdr.ygridB[1]] ]
+}
+te = {
+'teRot0' :  [[bdr.xgridB[5], bdr.ygridB[0]], [bdr.xgridB[4], bdr.ygridB[1]], [bdr.xgridB[5], bdr.ygridB[1]], [bdr.xgridB[6], bdr.ygridB[1]]],
+'teRot1'  : [[bdr.xgridB[4], bdr.ygridB[0]], [bdr.xgridB[5], bdr.ygridB[1]], [bdr.xgridB[4], bdr.ygridB[1]], [bdr.xgridB[4], bdr.ygridB[2]]],
+'teRot2' : [[bdr.xgridB[4], bdr.ygridB[0]], [bdr.xgridB[5], bdr.ygridB[1]], [bdr.xgridB[5], bdr.ygridB[0]], [bdr.xgridB[6], bdr.ygridB[0]]],
+'teRot3' : [[bdr.xgridB[5], bdr.ygridB[0]], [bdr.xgridB[4], bdr.ygridB[1]], [bdr.xgridB[5], bdr.ygridB[1]], [bdr.xgridB[5], bdr.ygridB[2]]]
+}
+
+
+shape = eleInv['eleInvRot0']
+figure = eleInv
+rotation = 'eleInvRot0'
+
+def rotations(figure, rotation):
+    index = int(rotation[-1])
+    if index < 3:
+        new_index = index + 1
+    else:
+        new_index = 0
+    new_rotation = rotation[:-1] + str(new_index)
+    new_shape = figure[new_rotation]
+    return new_shape, new_rotation
+
+def blocks_plot(shape):
     xpos = []
     ypos = []
-    for blockId, coords in find_blocks.items():
-        xpos.append(coords[0])
-        ypos.append(coords[1])
-        active_blocks.append('block'+str(blockId))
+    figBlocks = []
+    for coords in shape:
+        blockID = bdr.gen_FigID()
+        blockID = pygame.Surface(bdr.blockSize)
+        xpos.append(bdr.invxgrid[coords[0]])
+        ypos.append(bdr.invygrid[coords[1]])
+        figBlocks.append(blockID)
+    bdr.block_count = 0
+    return figBlocks, xpos, ypos
 
-    return active_blocks, xpos, ypos
-active_blocks, xpos, ypos = figBlockPrep()
-rot = 0
-def rotated(xpos, ypos, choice, rotation_options):
-    global clock
-    global time
-    global currenttime
-    global rot
-    clock = pygame.time.Clock()
-    time = 0
-    shape = figure.figures[choice['choice']][rotation_options[rot]]
-
-    rot += 1
-    if rot == 4:
-        rot = 0
-
-    find_blocks = figure.find_active_blocks(shape, middle_x, choice, rotation_options[rot], True, fix_xpos=xpos, fix_ypos=min(ypos))
-    rotated_blocks = []
-    xpos = []
-    ypos = []
-    for blockId, coords in find_blocks.items():
-        xpos.append(coords[0])
-        ypos.append(coords[1])
-        rotated_blocks.append('block' + str(blockId))
-    currenttime = 1
-    return rotated_blocks, xpos, ypos
+def find_bounds():
+    bounds = {}
+    for k, v in bdr.main_shape.items():
+        bounds[k] = []
+        for i in range(len(v)):
+            if v[i] == 1:
+                bounds[k] += [i]
+    return bounds
 
 
-floor = {0:20, 1:20, 2:20, 3:20, 4:20, 5:20, 6:20, 7:20, 8:20, 9:20}
+figBlocks, xpos, ypos = blocks_plot(shape)
 clock = pygame.time.Clock()
-currenttime = 1
-xaxis = bdr.xaxisB
-display.blit(frameSurf, (170, 100))
-run = True
-time = 0
-rot_y = 0
-block_is_active = False
-on_stash = False
+blocksCount, bubbleDown, speedDown, holdKeyLeft, holdKeyRight, time, currenttime = 0, 0, .96, 0, 0, 0, 2
+xspan = 0
+running = True
+bubble = True
 
-minvals = {}
-while run == True:
-    def main_game_logic(active_blocks, xpos, ypos, **kwargs):
-        global time
-        global currenttime
-        global middle_x
-        global floor
-        global minvals
-        global on_stash
-        global choice, rotation_options, shape
-        vel = .3
-        move_right = 0
-        move_left = 0
-        bubble_down = 0
-        new_block = True
-        while new_block:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    sys.exit()
-                    run = False
-                # Single Key
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_LEFT and min(xpos) >= 1:
-                        bdr.pressed_keys["left"] = True
-                        xpos = [x - 1 for x in xpos]
-                        middle_x -= 1
-                    elif event.key == pygame.K_RIGHT and max(xpos) <= 8:
-                        bdr.pressed_keys["right"] = True
-                        middle_x +=1
-                        xpos = [x + 1 for x in xpos]
-                    elif event.key == pygame.K_UP:
-                        rotated_blocks, xpos, ypos = rotated(xpos, ypos, choice, rotation_options)
-                    elif event.key == pygame.K_DOWN:
-                        bdr.pressed_keys["down"] = True
-                else:
-                    bdr.pressed_keys["left"] = False
-                    bdr.pressed_keys["right"] = False
-                    bdr.pressed_keys["down"] = False
-                    bdr.pressed_keys["up"] = False
+# Starting main game loop
+while running == True:
+    # Timer
+    milli = clock.tick()
+    seconds = milli / 1000.
+    time += seconds
+    yspan = min(ypos)
 
-            if bdr.pressed_keys["right"] and max(xpos) <= 8:
-                move_right += vel
-                if move_right >= 4:
-                    middle_x += 1
-                    xpos = [x + 1 for x in xpos]
-                    move_right = 0
-            if bdr.pressed_keys["left"] and min(xpos) >= 1:
-                print('s')
-                move_left += vel
-                if move_left >= 4:
-                    middle_x -= 1
-                    xpos = [x - 1 for x in xpos]
-                    move_left = 0
-            # Display refesh
-            display.blit(frameSurf, (170, 100))
-            frameSurf.fill(bdr.main_color)
+    # Display refesh
+    display.blit(frameSurf, (170, 100))
+    frameSurf.fill(bdr.main_color)
 
-            # Timer
-            milli = clock.tick()
-            seconds = milli / 1000.
-            time += seconds
+    # Plotting active figure
+    for block, x, y in zip(figBlocks, xpos, ypos):
+        display.blit(block, [bdr.xgridB[x], bdr.ygridB[y]])
+        block.fill(bdr.blue)
 
-            #Checking blocks on stash
+    # Find all side bounds
+    bounds = find_bounds()
 
-            if on_stash:
-                for savedBlock, coords in bdr.settled_blocks.items():
-                    savedx = coords[0]
-                    savedy = coords[1]
-                    display.blit(bdr.saved_settled_blocks[savedBlock], [bdr.xgridB[savedx], bdr.ygridB[savedy]])
-                    bdr.saved_settled_blocks[savedBlock].fill(bdr.blue)
-        #Plotting
-            for blockId, x, y in zip(active_blocks, xpos, ypos):
-                block = getattr(figure, blockId)
-                display.blit(block, [bdr.xgridB[x], bdr.ygridB[y]])
-                block.fill(bdr.blue)
-        #Saving set figures
-            max_y = []
-            max_x = []
-            minvals_y = {}
-            for x, y in zip(xpos, ypos):
-                if y == max(ypos):
-                    max_y.append(y)
-                    max_x.append(x)
-                if x not in minvals_y.keys():
-                    minvals_y[x] = y
-                else:
-                    if minvals_y.get(x) > y:
-                        minvals_y[x] = y
-            for x, y in zip(max_x, max_y):
-                if bdr.pressed_keys["down"] and y <= floor[x] - 1:
-                    print('t')
-                    bubble_down += vel
-                    if bubble_down >= 5:
-                        ypos = [y + 1 for y in ypos]
-                        bubble_down = 0
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            sys.exit()
+            running = False
 
-                if y == floor[x]-1:
-                    on_stash = True
-                    for k, v in minvals_y.items():
-                        floor[k] = v
-                    bdr.fig_toSave(xpos, ypos)
-                    active_blocks, xpos, ypos = figBlockPrep()
-                    middle_x = 3
-                    main_game_logic(active_blocks, xpos, ypos)
-                    new_block = False
-                else:
-                    # Bubble Y Down
-                    if currenttime <= time:
-                        currenttime += .5
-                        ypos = [y + 1 for y in ypos]
-                        rot_y = [y + 1 for y in ypos]
+        # Keystrokes
+        if event.type == pygame.KEYDOWN and not any([bdr.pressed_keys["left"], bdr.pressed_keys["right"]]):
+            if event.key == pygame.K_LEFT and min(xpos) >= 1:
+                bdr.pressed_keys["left"] = True
+                move_left = []
+                if x + 1 > 0:
+                    left_xpos = [x - 1 for x in xpos]
+                    for j, x in enumerate(left_xpos):
+                        if x in bounds[str(ypos[j])]:
+                            move_left.append(False)
+                        else:
+                            move_left.append(True)
+                if all(move_left):
+                    xpos = left_xpos
+                    xspan -= 1
+            if event.key == pygame.K_RIGHT and max(xpos) <= 8:
+                move_right = []
+                if x + 1 < 9:
+                    right_xpos = [x + 1 for x in xpos]
+                    for j, x in enumerate(right_xpos):
+                        if x in bounds[str(ypos[j])]:
+                            move_right.append(False)
+                        else:
+                            move_right.append(True)
+                if all(move_right):
+                    xpos = right_xpos
+                    xspan += 1
+                    bdr.pressed_keys["right"] = True
+            if event.key == pygame.K_DOWN:
+                bdr.pressed_keys["down"] = True
+            if event.key == pygame.K_UP:
+                #Rotating the figure
+                shape, rotation = rotations(figure, rotation)
 
-            # Create Grid
-            for i in range(20):
-                hline = i
-                if i <= 10:
-                    vline = i
-                    pygame.draw.line(display, bdr.gridc, (bdr.wideGrid[vline], 100), (bdr.wideGrid[vline], 800), 2)
-                pygame.draw.line(display, bdr.gridc, (170, bdr.tallGrid[hline]), (510, bdr.tallGrid[hline]), 2)
-            # Bound lines
-            pygame.draw.line(display, bdr.blue, (170, 100), (510, 100), 3)
-            pygame.draw.line(display, bdr.blue, (170, 800), (510, 800), 3)
-            pygame.draw.line(display, bdr.blue, (170, 100), (170, 800), 3)
-            pygame.draw.line(display, bdr.blue, (510, 100), (510, 800), 3)
+                figBlocks, xposTemp, yposTemp = blocks_plot(shape)
+                bounds = find_bounds()
+                canRotate = []
+                new_xpos = [x + xspan for x in xposTemp]
+                new_ypos = [y + yspan for y in yposTemp]
+                for x, y in zip(new_xpos, new_ypos):
+                    if x in bounds[str(y)]:
+                        canRotate.append(False)
+                    else:
+                        canRotate.append(True)
+                if all(canRotate):
+                    if max(new_xpos) <= 9 and min(new_xpos) >= 1:
+                        xpos = new_xpos
+                        ypos = new_ypos
+                    elif max(new_xpos) > 8:
+                        diff = max(new_xpos) - 9
+                        xpos = [x - diff for x in new_xpos]
+                        ypos = new_ypos
+                    elif min(new_xpos) < 1:
+                        diff = abs(min(new_xpos))
+                        xpos = [x + diff for x in new_xpos]
+                        ypos = new_ypos
+        else:
+            bdr.pressed_keys["right"] = False
+            bdr.pressed_keys["left"] = False
+            bdr.pressed_keys["down"] = False
+            holdKeyRight = -10
+            holdKeyLeft = -10
 
-            pygame.display.update()
+    if bdr.pressed_keys["left"] and min(xpos) >= 1:
+        holdKeyLeft += .3
+        move_left = []
+        if holdKeyLeft >= 5:
+            if x + 1 > 0:
+                left_xpos = [x - 1 for x in xpos]
+                for j, x in enumerate(left_xpos):
+                    if x in bounds[str(ypos[j])]:
+                        move_left.append(False)
+                    else:
+                        move_left.append(True)
+            if all(move_left):
+                xpos = left_xpos
+                xspan -= 1
+            holdKeyLeft = 0
+
+    if bdr.pressed_keys["right"] and max(xpos) <= 8:
+        holdKeyRight += .3
+        move_right = []
+        if holdKeyRight >= 5:
+            if x + 1 < 9:
+                right_xpos = [x + 1 for x in xpos]
+                for j, x in enumerate(right_xpos):
+                    if x in bounds[str(ypos[j])]:
+                        move_right.append(False)
+                    else:
+                        move_right.append(True)
+            if all(move_right):
+                xpos = right_xpos
+                xspan += 1
+            holdKeyRight = 0
+
+    if bdr.pressed_keys["down"]:
+        bubbleDown += speedDown
+        if bubbleDown >= 20:
+            ypos = [y + 1 for y in ypos]
+            bubbleDown = 0
+
+    #Saved blocks plot
+    for blockID, coords in bdr.settled_blocks.items():
+        display.blit(blockID, coords)
+        blockID.fill(bdr.blue)
+
+    # Stop at Floor
+    for x, y in zip(xpos, ypos):
+        if bdr.main_shape[str(y+1)][x] == 1:
+
+            bdr.blocks_meta(xpos,ypos)
+            figBlocks, xpos, ypos = blocks_plot(shape)
+            xspan = 0
+            break
+
+        if currenttime <= time:
+            on_motion = True
+            currenttime += .5
+            ypos = [y + 1  for y in ypos]
+            bounds = find_bounds()
+        else:
+            on_motion = False
 
 
-    main_game_logic(active_blocks, xpos, ypos)
+    # Create Grid
+    for i in range(20):
+        hline = i
+        if i <= 10:
+            vline = i
+            pygame.draw.line(display, bdr.gridc, (bdr.wideGrid[vline], 100), (bdr.wideGrid[vline], 800), 2)
+        pygame.draw.line(display, bdr.gridc, (170, bdr.tallGrid[hline]), (510, bdr.tallGrid[hline]), 2)
+    # Bound lines
+    pygame.draw.line(display, bdr.blue, (170, 100), (510, 100), 3)
+    pygame.draw.line(display, bdr.blue, (170, 800), (510, 800), 3)
+    pygame.draw.line(display, bdr.blue, (170, 100), (170, 800), 3)
+    pygame.draw.line(display, bdr.blue, (510, 100), (510, 800), 3)
+
+    pygame.display.update()
