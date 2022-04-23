@@ -1,12 +1,8 @@
 import pygame
-
+import numpy as np
 
 class Builder():
     def __init__(self):
-
-        #Dimensions
-        self.disp_width = 700
-        self.disp_height = 850
         self.blockSize = width, height = (34, 35)
         self.frameSize = width, height = (340, 700)
 
@@ -26,88 +22,127 @@ class Builder():
                          485: 11, 520: 12, 555: 13, 590: 14, 625: 15, 660: 16, 695: 17, 730: 18, 765: 19, 800: 20}
         #Colors
         self.grey = (61,61,66)
-        self.light_grey = (20,20,60)
-        self.main_color = (0,0,20)
+        self.cyan = (76,160,160)
+        self.disp_color = '#5C6591'
+        self.main_color = '#0F193D'
         self.white = (255, 255, 255)
-        self.blue = (102,102,255)
-        self.gridc = (45,45,45)
+        self.blue = (95, 8, 255)
+        self.surf_outline= '#8A7C7C'
+        self.upc_shapes_color = '#5E668F'
+        self.gridc = '#4B538F'
+        self.orange = '#ee964b'
 
         self.block_count = 0
+        self.settled_blocks = {}
+        self.strike = []
 
-        #Motion
+        # self.fig_colors = [[37, 162, 68], [118, 120, 237],  [ 247, 184, 1], [241, 135, 1], [243, 91, 4]]
+        self.fig_colors = [[166, 160, 0], [168, 8, 82], [247, 57, 20], [118, 120, 237], [111, 163, 112]]
+        self.fig_colors_dic = {'yellow': [166, 160, 0], 'red': [168, 8, 82], 'orange': [247, 57, 20], 'blue': [118, 120, 237],
+                      'green': [111, 163, 112]}
         self.pressed_keys = {"left": False, "right": False, "up": False, "down": False}
 
-        #Timer and FPS
-        self.main_shape = {   '0': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                              '1': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                              '2': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                              '3': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                              '4': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                              '5': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                              '6': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                              '7': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                              '8': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                              '9': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                              '10':[0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                              '11': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                              '12': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                              '13': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                              '14': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                              '15': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                              '16': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                              '17': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                              '18': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                              '19': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                              '20': [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-                              '21': [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]}
+        # Creating main_shape to update active blocks
+        self.main_shape = {}
+        self.colored_blocks = {}
+        for y in range(22):
+            if y not in [20, 21]:
+                self.main_shape[str(y)] = np.zeros(10, dtype=int).tolist()
+                self.colored_blocks[str(y)] = np.zeros(10, dtype=int).tolist()
 
-        self.floor_bounds = {'0': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                             '1': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                             '2': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                             '3': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                             '4': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                             '5': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                             '6': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                             '7': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                             '8': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                             '9': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                            '10': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1] }
-
-        self.settled_blocks = {}
+            else:
+                self.main_shape[str(y)] = np.ones(10, dtype=int).tolist()
+                self.colored_blocks[str(y)] = np.ones(10, dtype=int).tolist()
 
 
-
-    def Display(self):
-        self.display = pygame.display.set_mode((self.disp_width, self.disp_height))
+        comp_ = ['10000'] * 9
+        self.comp = [10000]
+        for i, num in enumerate(comp_):
+            self.comp.append(self.comp[i] + int(num))
+    @staticmethod
+    def Display():
+        #Dimensions
+        width = 700
+        height = 850
+        display = pygame.display.set_mode((width, height))
         pygame.display.set_caption("Tetris Game")
-        return self.display
+        return display
 
     def gen_FigID(self):
         self.block_count += 1
         code = str(self.block_count)+'block'
         return code
 
+    def trickle_down(self, grid, colors_grid):
+        full_line = [False if 0 in line else True for line in grid.values()]
+        if True in full_line[:-2]:
+            for i in range(20):
+                if 0 not in grid[str(i)]:
+                    self.strike.append(i)
+                    ls = [l for l in range(i)]
+                    print('Something wrong with Rec')
+                    ls.reverse()
+                    for j in ls:
+                        grid[str(j + 1)] = grid[str(j)]
+                        colors_grid[str(j + 1)] = colors_grid[str(j)]
+            return self.trickle_down(grid, colors_grid)
+        else:
+            return grid, colors_grid
 
-    def blocks_meta(self, xpos, ypos):
-        #Saving corresponding coords and ID
-        for x, y in zip(xpos, ypos):
-            blockID = str(x) + 'x' + str(y) + 'y'
-            blockID = pygame.Surface(self.blockSize)
-            self.settled_blocks[blockID] = [self.xgridB[x], self.ygridB[y]]
 
-        #Update main_shape
+    def blocks_meta(self, xpos, ypos, color):
+
+        # Update main shape and colored blocks
         for k in self.main_shape.keys():
             for x, y in zip(xpos, ypos):
                 if k == str(y):
+                    print('X', 'Y : ', x, y)
+                    print('K  : ', k)
                     self.main_shape[k][x] = 1
-
-
-        pass
-
-    def debug(self, *args):
-        print(args)
-
+                    self.colored_blocks[k][x] = color
+        full_line = [False if 0 in line else True for line in self.main_shape.values()]
+        if True in full_line[:-2]:
+            self.main_shape, self.colored_blocks = self.trickle_down(self.main_shape, self.colored_blocks)
 
 
 
-rc = Builder().grey
+    @staticmethod
+    def all_figures(xgridB, ygridB):
+        Builder.ele = {
+            'eleRot0': [[xgridB[4], ygridB[0]], [xgridB[4], ygridB[1]], [xgridB[4], ygridB[2]], [xgridB[5], ygridB[2]] ],
+            'eleRot1': [[xgridB[6], ygridB[0]], [xgridB[4], ygridB[1]], [xgridB[5], ygridB[1]], [xgridB[6], ygridB[1]] ],
+            'eleRot2': [[xgridB[4], ygridB[0]], [xgridB[5], ygridB[0]], [xgridB[5], ygridB[1]], [xgridB[5], ygridB[2]] ],
+            'eleRot3': [[xgridB[4], ygridB[0]], [xgridB[5], ygridB[0]], [xgridB[6], ygridB[0]], [xgridB[4], ygridB[1]] ]
+        }
+
+        Builder.eleInv = {
+            'eleInvRot0': [[xgridB[5], ygridB[0]], [xgridB[5], ygridB[1]], [xgridB[5], ygridB[2]], [xgridB[4], ygridB[2]] ],
+            'eleInvRot1': [[xgridB[4], ygridB[0]], [xgridB[4], ygridB[1]], [xgridB[5], ygridB[1]], [xgridB[6], ygridB[1]] ],
+            'eleInvRot2': [[xgridB[4], ygridB[0]], [xgridB[5], ygridB[0]], [xgridB[4], ygridB[1]], [xgridB[4], ygridB[2]] ],
+            'eleInvRot3': [[xgridB[4], ygridB[0]], [xgridB[5], ygridB[0]], [xgridB[6], ygridB[0]], [xgridB[6], ygridB[1]] ]
+        }
+
+        Builder.te = {
+            'teRot0': [[xgridB[5], ygridB[0]], [xgridB[4], ygridB[1]], [xgridB[5], ygridB[1]],[xgridB[6], ygridB[1]] ],
+            'teRot1': [[xgridB[4], ygridB[0]], [xgridB[5], ygridB[1]], [xgridB[4], ygridB[1]],[xgridB[4], ygridB[2]] ],
+            'teRot2': [[xgridB[4], ygridB[0]], [xgridB[5], ygridB[1]], [xgridB[5], ygridB[0]],[xgridB[6], ygridB[0]] ],
+            'teRot3': [[xgridB[5], ygridB[0]], [xgridB[4], ygridB[1]], [xgridB[5], ygridB[1]],[xgridB[5], ygridB[2]] ]
+        }
+
+        Builder.square = {
+            'squareRot0': [[xgridB[4], ygridB[0]], [xgridB[5], ygridB[0]], [xgridB[5], ygridB[1]], [xgridB[4], ygridB[1]] ]
+        }
+
+        Builder.zed = {
+            'zedRot0': [[xgridB[4], ygridB[0]], [xgridB[5], ygridB[0]], [xgridB[6], ygridB[1]], [xgridB[5], ygridB[1]] ],
+            'zedRot1': [[xgridB[5], ygridB[0]], [xgridB[4], ygridB[1]], [xgridB[4], ygridB[2]], [xgridB[5], ygridB[1]] ],
+        }
+
+        Builder.zedInv = {
+            'zedInvRot0': [[xgridB[6], ygridB[0]], [xgridB[5], ygridB[0]], [xgridB[4], ygridB[1]], [xgridB[5], ygridB[1]] ],
+            'zedInvRot1': [[xgridB[5], ygridB[1]], [xgridB[4], ygridB[0]], [xgridB[4], ygridB[1]], [xgridB[5], ygridB[2]] ],
+        }
+        Builder.line = {
+            'lineRot0': [[xgridB[5], ygridB[2]], [xgridB[5], ygridB[0]], [xgridB[5], ygridB[3]], [xgridB[5], ygridB[1]] ],
+            'lineRot1': [[xgridB[6], ygridB[1]], [xgridB[4], ygridB[1]], [xgridB[3], ygridB[1]], [xgridB[5], ygridB[1]] ],
+        }
