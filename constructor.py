@@ -34,22 +34,31 @@ class Builder():
 
         self.block_count = 0
         self.settled_blocks = {}
+        self.strike = []
 
         # self.fig_colors = [[37, 162, 68], [118, 120, 237],  [ 247, 184, 1], [241, 135, 1], [243, 91, 4]]
         self.fig_colors = [[166, 160, 0], [168, 8, 82], [247, 57, 20], [118, 120, 237], [111, 163, 112]]
-        # 1=Yellow, 2=Red, 3=Orange, 4=Blue,5=Green
-        #Motion
+        self.fig_colors_dic = {'yellow': [166, 160, 0], 'red': [168, 8, 82], 'orange': [247, 57, 20], 'blue': [118, 120, 237],
+                      'green': [111, 163, 112]}
         self.pressed_keys = {"left": False, "right": False, "up": False, "down": False}
 
         # Creating main_shape to update active blocks
         self.main_shape = {}
+        self.colored_blocks = {}
         for y in range(22):
             if y not in [20, 21]:
                 self.main_shape[str(y)] = np.zeros(10, dtype=int).tolist()
+                self.colored_blocks[str(y)] = np.zeros(10, dtype=int).tolist()
+
             else:
                 self.main_shape[str(y)] = np.ones(10, dtype=int).tolist()
+                self.colored_blocks[str(y)] = np.ones(10, dtype=int).tolist()
 
-        fig_colors = []
+
+        comp_ = ['10000'] * 9
+        self.comp = [10000]
+        for i, num in enumerate(comp_):
+            self.comp.append(self.comp[i] + int(num))
     @staticmethod
     def Display():
         #Dimensions
@@ -64,19 +73,38 @@ class Builder():
         code = str(self.block_count)+'block'
         return code
 
+    def trickle_down(self, grid, colors_grid):
+        full_line = [False if 0 in line else True for line in grid.values()]
+        if True in full_line[:-2]:
+            for i in range(20):
+                if 0 not in grid[str(i)]:
+                    self.strike.append(i)
+                    ls = [l for l in range(i)]
+                    print('Something wrong with Rec')
+                    ls.reverse()
+                    for j in ls:
+                        grid[str(j + 1)] = grid[str(j)]
+                        colors_grid[str(j + 1)] = colors_grid[str(j)]
+            return self.trickle_down(grid, colors_grid)
+        else:
+            return grid, colors_grid
 
-    def blocks_meta(self, xpos, ypos):
-        #Saving corresponding coords and ID
-        for x, y in zip(xpos, ypos):
-            blockID = str(x) + 'x' + str(y) + 'y'
-            blockID = pygame.Surface(self.blockSize)
-            self.settled_blocks[blockID] = [self.xgridB[x], self.ygridB[y]]
 
-        #Update main_shape
+    def blocks_meta(self, xpos, ypos, color):
+
+        # Update main shape and colored blocks
         for k in self.main_shape.keys():
             for x, y in zip(xpos, ypos):
                 if k == str(y):
+                    print('X', 'Y : ', x, y)
+                    print('K  : ', k)
                     self.main_shape[k][x] = 1
+                    self.colored_blocks[k][x] = color
+        full_line = [False if 0 in line else True for line in self.main_shape.values()]
+        if True in full_line[:-2]:
+            self.main_shape, self.colored_blocks = self.trickle_down(self.main_shape, self.colored_blocks)
+
+
 
     @staticmethod
     def all_figures(xgridB, ygridB):

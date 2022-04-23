@@ -22,7 +22,6 @@ figures = [Builder.ele, Builder.eleInv, Builder.te, Builder.square, Builder.zed,
 upc_shapes = []
 upc_shapes_rev = []
 upc_shapes_rots = []
-saved_colors = []
 
 # Initializing figures
 def gen_upc_shapes():
@@ -106,7 +105,7 @@ blocksCount, bubbleDown, speedDown, holdKeyLeft, holdKeyRight, time, currenttime
 xspan = 0
 running = True
 bubble = True
-
+strikeLineTimer = 0
 # Starting main game loop _______________________________________
 
 while running:
@@ -145,6 +144,24 @@ while running:
                 display.blit(upcShape, [x, y])
                 img = font.render("y :  " + 'YY', True, bdr.white)
             y_increment += 10
+
+    # Colors for saved blocks
+    saved_blocks_coors = {}
+    for key, values in bdr.main_shape.items():
+        if int(key) <= 19:
+            for i in range(len(values)):
+                if bdr.colored_blocks[key][i] != 0:
+                    color = bdr.fig_colors_dic[bdr.colored_blocks[key][i]]
+                    x_color = bdr.xgridB[i]
+                    y_color = bdr.ygridB[int(key)]
+                    saved_blocks_coors[x_color, y_color] = color
+            for item, color in saved_blocks_coors.items():
+                x_color = item[0]
+                y_color = item[1]
+                active_block = pygame.Surface(bdr.blockSize)
+                active_block.fill(color)
+                display.blit(active_block, [x_color, y_color])
+        # print(saved_blocks_coors.values())
 
     display.blit(img, (550, 90))
 
@@ -266,17 +283,27 @@ while running:
             ypos = [y + 1 for y in ypos]
             bubbleDown = 0
 
-    # Saved blocks plot
-    for i, (blockID, coords) in enumerate(bdr.settled_blocks.items()):
-        display.blit(blockID, coords)
-        blockID.fill(saved_colors[i])
+    # Adding flash color to filled line strike
+    # if len(bdr.strike) > 0:®
+    #     ('ACTIVE')
+    #     strikeLineTimer = 0
+    #     for i, num in enumerate(bdr.comp):
+    #         while strikeLineTimer < num:
+    #             for line_strike in bdr.strike:
+    #                 strike_block = pygame.Surface(bdr.blockSize)
+    #                 strike_block.fill(bdr.white)
+    #                 for x in range(10):
+    #                     display.blit(strike_block, [bdr.xgridB[x], bdr.ygridB[line_strike]])
+    #             strikeLineTimer += 1
+    #         bdr.strike = []
 
-    # Stop at Floor
     for x, y in zip(xpos, ypos):
         if bdr.main_shape[str(y+1)][x] == 1:
-            for block in range(len(xpos)):
-                saved_colors.append(block_color)
-            bdr.blocks_meta(xpos,ypos)
+            #Saving current color and its coords
+            curr_color = [color for color, color_code in bdr.fig_colors_dic.items() if color_code == block_color]
+            curr_color = '.'.join(map(str, curr_color))
+            bdr.blocks_meta(xpos,ypos, curr_color)
+
             rotation, shape = select_from_upc(upc_shapes)
             fig_choice = upc_shapes_rots.pop(0)
             if color_ind < len(bdr.fig_colors)-1:
@@ -289,13 +316,10 @@ while running:
             break
 
         if currenttime <= time:
-            print(bdr.settled_blocks)
-            on_motion = True
+            # print(bdr.settled_blocks)
             currenttime += .5
             ypos = [y + 1  for y in ypos]
             bounds = find_bounds()
-        else:
-            on_motion = False
 
 
     # Create Grid
