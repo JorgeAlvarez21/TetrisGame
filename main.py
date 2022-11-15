@@ -8,15 +8,16 @@ display = Builder.Display()
 Builder.all_figures(bdr.xgridB, bdr.ygridB)
 frameSurf = pygame.Surface(bdr.frameSize)
 upc_Blocks_Surf = pygame.Surface((160, 520))
-tetrisLogo = pygame.image.load('Nintendo_Tetris_logo.png')
-tetrisLogo = pygame.transform.scale(tetrisLogo, (290, 85))
+score_Surf = pygame.Surface((150, 250))
+tetrisLogo = pygame.image.load('tetris-logo.png')
+tetrisLogo = pygame.transform.scale(tetrisLogo, (220, 90))
 
 
 
 # Global variables
 color_ind = 0
 block_color = bdr.fig_colors[color_ind]
-font = pygame.font.SysFont('halkduster.ttf', 48)
+font = pygame.font.SysFont('halkduster.ttf', 28)
 
 figures = [Builder.ele, Builder.eleInv, Builder.te, Builder.square, Builder.zed, Builder.zedInv, Builder.line]
 upc_shapes = []
@@ -107,21 +108,42 @@ running = True
 bubble = True
 strikeLineTimer = 0
 # Starting main game loop _______________________________________
+score = font.render("Score: ", True, bdr.light_green, 16)
+lines = font.render("Lines: ", True, bdr.light_green, 16)
+time_since = font.render("Timer: ", True, bdr.light_green, 16)
+
+timer_counter = 0
+score_value = 250
+score_update = [250*x for x in range(9,300) if x in [i**2 for i in range(200)]]
 
 while running:
     # Timer
     milli = clock.tick()
     seconds = milli / 1000.
     time += seconds
+    timer_counter += round(seconds, 2)
+    timer_counter = round(timer_counter, 2)
+    if bdr.lines * score_value in score_update:
+        score_value += score_value
+    score_n = font.render(str(bdr.lines * score_value), True, bdr.light_blue, 16)
+    lines_n = font.render(str(bdr.lines), True, bdr.light_blue, 16)
+    time_since_n = font.render(str(timer_counter), True, bdr.light_blue, 16)
     yspan = min(ypos)
 
     # Display refesh
     display.fill(bdr.disp_color)
     display.blit(frameSurf, (170, 100))
-    display.blit(tetrisLogo, (190, 10))
+    display.blit(tetrisLogo, (250, 10))
     frameSurf.fill(bdr.main_color)
     display.blit(upc_Blocks_Surf, (520, 200))
     upc_Blocks_Surf.fill(bdr.main_color)
+    display.blit(score_Surf, (10, 300))
+    display.blit(score, (13, 310))
+    display.blit(score_n, (70, 340))
+    display.blit(lines, (13, 400))
+    display.blit(lines_n, (70, 430))
+    display.blit(time_since, (13, 480))
+    display.blit(time_since_n, (70, 510))
 
     # Plotting upcoming shapes
     upc_xgrid = {272: 540, 306: 570, 340: 600, 374: 625, 408: 670}
@@ -142,7 +164,6 @@ while running:
                 upcShape = pygame.Surface((30, 30))
                 upcShape.fill(bdr.orange)
                 display.blit(upcShape, [x, y])
-                img = font.render("y :  " + 'YY', True, bdr.white)
             y_increment += 10
 
     # Colors for saved blocks
@@ -163,7 +184,6 @@ while running:
                 display.blit(active_block, [x_color, y_color])
         # print(saved_blocks_coors.values())
 
-    display.blit(img, (550, 90))
 
     # Plotting active figure
     for block, x, y in zip(figBlocks, xpos, ypos):
